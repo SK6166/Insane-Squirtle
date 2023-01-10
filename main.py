@@ -14,9 +14,13 @@ clock = pygame.time.Clock()
 PLATFORM_WIDTH = 32
 PLATFORM_HEIGHT = 32
 PLATFORM_COLOR = "#FF6262"
-ICON_DIR = os.path.dirname(__file__)  # Полный путь к каталогу с файлами
+ICON_DIR = os.path.dirname(__file__)
 
-curlvl = 6
+programIcon = pygame.image.load('icon.png')
+
+pygame.display.set_icon(programIcon)
+
+curlvl = 0
 lvllist = ['lvlTEST', 'lvl1', 'lvl2', 'lvl3', 'lvl4', 'lvl5', 'lvl6']
 
 
@@ -270,22 +274,23 @@ class SpikeL180(sprite.Sprite):
 
 
 class Rock(sprite.Sprite):
-    def __init__(self, x, y, way=10, speedxy=4):
+    def __init__(self, x, y, way=10, speedxy=4, side=1):
         sprite.Sprite.__init__(self)
         self.image = Surface((PLATFORM_WIDTH, PLATFORM_HEIGHT))
         self.image.fill(Color(PLATFORM_COLOR))
         self.image = image.load("%s/data/rock.png" % ICON_DIR)
         self.rect = Rect(x, y, 32, 32)
-        self.speedxy = speedxy
+        self.speedxy = speedxy * side
         self.k = 0
         self.way = way * 32
-        self.side = 1
+        self.side = side
 
     def update(self):
-        if self.k > self.way:
+        if self.k == self.way * self.side:
             self.side = -self.side
+            self.speedxy = -self.speedxy
             self.k = 0
-        self.rect.x += self.speedxy * self.side
+        self.rect.x += self.speedxy
         self.k += self.speedxy
 
 
@@ -318,19 +323,24 @@ def generate_level(level):
                 xh = x
                 yh = y
             if col == "s":
-                en = SpikeS(x, y)
+                if level[y // 32 - 1][x // 32] == '-':
+                    en = SpikeS180(x, y)
+                else:
+                    en = SpikeS(x, y)
                 enemy_list.add(en)
                 enemy.append(en)
             if col == "m":
-                en = SpikeM(x, y)
+                if level[y // 32 - 1][x // 32] == '-':
+                    en = SpikeM180(x, y)
+                else:
+                    en = SpikeM(x, y)
                 enemy_list.add(en)
                 enemy.append(en)
             if col == "l":
-                en = SpikeL(x, y)
-                enemy_list.add(en)
-                enemy.append(en)
-            if col == "u":
-                en = SpikeS180(x, y)
+                if level[y // 32 - 1][x // 32] == '-':
+                    en = SpikeL180(x, y)
+                else:
+                    en = SpikeL(x, y)
                 enemy_list.add(en)
                 enemy.append(en)
             if col == "E":
@@ -352,8 +362,16 @@ def generate_level(level):
                                 k += 1
                             else:
                                 break
-                print(k)
-                rock = Rock(x, y, k, 8)
+                side = 1
+                if k == 0:
+                    i = level[y // 32]
+                    for j in range(x // 32 - 1, 0, -1):
+                        if i[j] == ' ':
+                            k += 1
+                        else:
+                            break
+                    side = -1
+                rock = Rock(x, y, k, 8, side)
                 enemyMoveS.append(rock)
                 if not lvllist[curlvl] == 'lvl6':
                     EnemyMove_list.add(rock)
@@ -399,7 +417,7 @@ def main():
 
     hero = Player(x, y)
     entities.add(hero)
-    font = pygame.font.Font(None, 50)
+    font = pygame.font.Font("GameF/vergilia.ttf", 100)
 
     total_level_width = len(level[0]) * PLATFORM_WIDTH
     total_level_height = len(level) * PLATFORM_HEIGHT
@@ -447,7 +465,7 @@ def main():
             if e.type == KEYDOWN and e.key == pygame.K_r and not hero.alive():
                 if end:
                     end = False
-                    curlvl = 0
+                    curlvl = 1
                 main()
         screen.blit(BACKGROUND, (0, 0))
         camera.update(hero)
@@ -467,15 +485,15 @@ def main():
             else:
                 con = font.render("Congratulations, it was the last level!!!^_^", True, (255, 255, 255))
                 rect = con.get_rect()
-                rect.center = (screen.get_rect().center[0], screen.get_rect().center[1] - 50)
+                rect.center = (screen.get_rect().center[0], screen.get_rect().center[1] - 100)
                 screen.blit(con, rect)
                 gameoverRGB = font.render("Press R to Respawn", True, (255, 255, 255))
                 rect = gameoverRGB.get_rect()
                 rect.center = (screen.get_rect().center[0], screen.get_rect().center[1])
                 screen.blit(gameoverRGB, rect)
-                thx = font.render("Thnx y for playing our game!!!<3<3<3", True, (255, 255, 255))
+                thx = font.render("Thx u for playing our game!!!", True, (255, 255, 255))
                 rect = thx.get_rect()
-                rect.center = (screen.get_rect().center[0], screen.get_rect().center[1] + 50)
+                rect.center = (screen.get_rect().center[0], screen.get_rect().center[1] + 100)
                 screen.blit(thx, rect)
                 end = True
                 hero.live = False
