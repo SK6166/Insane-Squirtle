@@ -20,8 +20,9 @@ programIcon = pygame.image.load('icon.png')
 
 pygame.display.set_icon(programIcon)
 
-curlvl = 0
-lvllist = ['lvlTEST', 'lvl1', 'lvl2', 'lvl3', 'lvl4', 'lvl5', 'lvl6']
+deth_counter = 0
+curlvl = 7
+lvllist = ['lvlTEST', 'lvl1', 'lvl2', 'lvl3', 'lvl4', 'lvl5', 'lvl6', 'lvl7']
 
 
 class Platform(sprite.Sprite):
@@ -137,10 +138,10 @@ class Player(sprite.Sprite):
         self.boltAnimJump = pyganim.PygAnimation(ANIMATION_JUMP)
         self.boltAnimJump.play()
 
-    def update(self, left, right, up, platforms):
-        if self.death() or not self.live:
+    def update(self, left, right, up, platforms, imortal):
+        if (self.death()) and not imortal or not self.live:
             self.live = False
-            if self.dk:
+            if self.dk and not imortal:
                 self.boltAnimDeath.play()
                 self.dk = False
             self.image.fill(Color(COLOR))
@@ -384,7 +385,7 @@ def generate_level(level):
 
 
 def main():
-    global enemy_list, enemy, entities, hero, platforms, MOVE_SPEED, door_list, curlvl, thread, lvllist, EnemyMove_list, enemyMoveS
+    global enemy_list, enemy, entities, hero, platforms, MOVE_SPEED, door_list, curlvl, thread, lvllist, EnemyMove_list, enemyMoveS, deth_counter
     pygame.init()
     pygame.display.set_caption("Insame Sqwirtle")
     bg = Surface((WIN_WIDTH, WIN_HEIGHT))
@@ -394,6 +395,7 @@ def main():
     s = 3
     k = False
     end = False
+    imortal = False
 
     enemy_list = pygame.sprite.Group()
     entities = pygame.sprite.Group()
@@ -412,12 +414,17 @@ def main():
     t = 250
     pygame.time.set_timer(pl, t)
 
+    textobnov = pygame.USEREVENT + 55
+    t = 10000
+    pygame.time.set_timer(pl, t)
+
     level = load_level(f"{lvllist[curlvl]}.txt")
     x, y = generate_level(level)
 
     hero = Player(x, y)
     entities.add(hero)
     font = pygame.font.Font("GameF/vergilia.ttf", 100)
+    dc = pygame.font.Font("GameF/vergilia.ttf", 25)
 
     total_level_width = len(level[0]) * PLATFORM_WIDTH
     total_level_height = len(level) * PLATFORM_HEIGHT
@@ -443,11 +450,11 @@ def main():
             if e.type == KEYDOWN and e.key == K_ESCAPE:
                 running = False
             if e.type == KEYDOWN and e.key == K_LCTRL:
-                MOVE_SPEED = 2
+                MOVE_SPEED = 4
             if e.type == KEYUP and e.key == K_LCTRL:
                 MOVE_SPEED = 7
             if e.type == KEYDOWN and e.key == K_RALT:
-                MOVE_SPEED = 2
+                MOVE_SPEED = 4
             if e.type == KEYUP and e.key == K_RALT:
                 MOVE_SPEED = 7
             if e.type == KEYUP and e.key == K_UP:
@@ -466,10 +473,14 @@ def main():
                 if end:
                     end = False
                     curlvl = 1
+                deth_counter += 1
                 main()
+            all_keys = pygame.key.get_pressed()
+            if all_keys[pygame.K_n] and all_keys[pygame.K_d]:
+                imortal = True
         screen.blit(BACKGROUND, (0, 0))
         camera.update(hero)
-        hero.update(left, right, up, platforms)
+        hero.update(left, right, up, platforms, imortal)
         if sec:
             EnemyMove_list.update()
             for e in enemyMoveS:
@@ -527,6 +538,27 @@ def main():
             screen.blit(gameoverRGB, rect)
             pygame.draw.rect(screen, (255, 255, 255), (
                 0, 0, WIN_WIDTH, WIN_HEIGHT), 5)
+        if textobnov:
+            a = randint(1, 3)
+            b = randint(1, 3)
+            c = randint(1, 3)
+            d = randint(1, 3)
+        con = dc.render(f"number of deaths: {deth_counter}", True, (0, 0, 255))
+        rect = con.get_rect()
+        rect.center = (1786, 26)
+        screen.blit(con, rect)
+        con = dc.render(f"number of deaths: {deth_counter}", True, (0, 255, 0))
+        rect = con.get_rect()
+        rect.center = (1784, 24)
+        screen.blit(con, rect)
+        con = dc.render(f"number of deaths: {deth_counter}", True, (255, 0, 0))
+        rect = con.get_rect()
+        rect.center = (1782, 22)
+        screen.blit(con, rect)
+        con = dc.render(f"number of deaths: {deth_counter}", True, (255, 255, 255))
+        rect = con.get_rect()
+        rect.center = (1780, 20)
+        screen.blit(con, rect)
         pygame.display.update()
         clock.tick(60)
     pygame.quit()
