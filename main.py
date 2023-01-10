@@ -21,7 +21,7 @@ programIcon = pygame.image.load('icon.png')
 pygame.display.set_icon(programIcon)
 
 deth_counter = 0
-curlvl = 7
+curlvl = 1
 lvllist = ['lvlTEST', 'lvl1', 'lvl2', 'lvl3', 'lvl4', 'lvl5', 'lvl6', 'lvl7']
 
 
@@ -189,14 +189,14 @@ class Player(sprite.Sprite):
         return self.live
 
     def death(self):
-        if pygame.sprite.spritecollideany(hero, enemy_list):
+        if pygame.sprite.spritecollideany(self, enemy_list):
             return True
-        if pygame.sprite.spritecollideany(hero, EnemyMove_list):
+        if pygame.sprite.spritecollideany(self, EnemyMove_list):
             return True
         return False
 
     def Escape(self):
-        if pygame.sprite.spritecollideany(hero, door_list):
+        if pygame.sprite.spritecollideany(self, door_list):
             return True
         return False
 
@@ -384,8 +384,7 @@ def generate_level(level):
     return xh, yh
 
 
-def main():
-    global enemy_list, enemy, entities, hero, platforms, MOVE_SPEED, door_list, curlvl, thread, lvllist, EnemyMove_list, enemyMoveS, deth_counter
+def main(curlvl, deth_counter):
     pygame.init()
     pygame.display.set_caption("Insame Sqwirtle")
     bg = Surface((WIN_WIDTH, WIN_HEIGHT))
@@ -396,14 +395,6 @@ def main():
     k = False
     end = False
     imortal = False
-
-    enemy_list = pygame.sprite.Group()
-    entities = pygame.sprite.Group()
-    EnemyMove_list = pygame.sprite.Group()
-    platforms = []
-    enemy = []
-    enemyMoveS = []
-    door_list = pygame.sprite.Group()
 
     clock = pygame.time.Clock()
     pl = pygame.USEREVENT + 1
@@ -474,7 +465,8 @@ def main():
                     end = False
                     curlvl = 1
                 deth_counter += 1
-                main()
+                return curlvl
+                running = False
             all_keys = pygame.key.get_pressed()
             if all_keys[pygame.K_n] and all_keys[pygame.K_d]:
                 imortal = True
@@ -492,7 +484,7 @@ def main():
         if hero.Escape():
             curlvl = curlvl + 1
             if curlvl + 1 <= len(lvllist):
-                main()
+                return curlvl
             else:
                 con = font.render("Congratulations, it was the last level!!!^_^", True, (255, 255, 255))
                 rect = con.get_rect()
@@ -565,4 +557,12 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    while True:
+        enemy_list = pygame.sprite.Group()
+        entities = pygame.sprite.Group()
+        EnemyMove_list = pygame.sprite.Group()
+        platforms = []
+        enemy = []
+        enemyMoveS = []
+        door_list = pygame.sprite.Group()
+        curlvl = main(curlvl, deth_counter)
