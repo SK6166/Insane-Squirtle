@@ -316,6 +316,7 @@ def generate_level(level):
     x = 0
     y = 0
     for row in level:
+        rc = 0
         for col in row:
             if col == "-":
                 pf = Platform(x, y)
@@ -351,28 +352,27 @@ def generate_level(level):
                 door_list.add(exit)
             if col == "r":
                 k = 0
-                r = False
-                for i in list(row):
-                    if i != 'r' and not r:
-                        pass
+                xr = x // 32
+                yr = y // 32
+                r = True
+                while r:
+                    xr += 1
+                    if level[yr][xr] == ' ':
+                        k += 1
                     else:
-                        if not r:
-                            r = True
-                            pass
-                        else:
-                            if i == " ":
-                                k += 1
-                            else:
-                                break
-                side = 1
+                        side = 1
+                        r = False
                 if k == 0:
-                    i = level[y // 32]
-                    for j in range(x // 32 - 1, 0, -1):
-                        if i[j] == ' ':
+                    r = True
+                    xr = x // 32
+                    yr = y // 32
+                    while r:
+                        xr -= 1
+                        if level[yr][xr] == ' ':
                             k += 1
                         else:
-                            break
-                    side = -1
+                            side = -1
+                            r = False
                 rock = Rock(x, y, k, 8, side)
                 enemyMoveS.append(rock)
                 if not lvllist[curlvl] == 'lvl6':
@@ -383,6 +383,54 @@ def generate_level(level):
         y += PLATFORM_HEIGHT
         x = 0
     return xh, yh
+
+
+def cool_font(text, w=0, h=0, r=100, s=3):
+    pygame.init()
+    font = pygame.font.Font("GameF/vergilia.ttf", r)
+    gameoverB = font.render(text, True, (0, 0, 255))
+    rect = gameoverB.get_rect()
+    rect.center = (w + s * 3 + randint(1, s), h + s * 3 + randint(1, s))
+    screen.blit(gameoverB, rect)
+    gameoverG = font.render(text, True, (0, 255, 0))
+    rect = gameoverG.get_rect()
+    rect.center = (w + s * 2 + randint(1, s), h + s * 2 + randint(1, s))
+    screen.blit(gameoverG, rect)
+    gameoverR = font.render(text, True, (255, 0, 0))
+    rect = gameoverR.get_rect()
+    rect.center = (w + s + randint(1, s), h + s + randint(1, s))
+    screen.blit(gameoverR, rect)
+    gameoverRGB = font.render(text, True, (255, 255, 255))
+    rect = gameoverRGB.get_rect()
+    rect.center = (w, h)
+    screen.blit(gameoverRGB, rect)
+
+
+def start_screen():
+    pygame.init()
+    pygame.display.set_caption("Insame Sqwirtle")
+    fon = pygame.transform.scale(BACKGROUND, (WIN_WIDTH, WIN_HEIGHT))
+    screen.blit(fon, (0, 0))
+    cool_font("Insame Sqwirtle", WIN_WIDTH // 2, WIN_HEIGHT // 2 - WIN_WIDTH // 25)
+    cool_font("Press any button to start", WIN_WIDTH // 2, WIN_HEIGHT // 2 + WIN_HEIGHT // 25)
+    clock = pygame.time.Clock()
+    pl = pygame.USEREVENT + 50
+    t = 50
+    pygame.time.set_timer(pl, t)
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                return False
+            elif event.type == pygame.KEYDOWN and event.key != pygame.K_ESCAPE or event.type == pygame.MOUSEBUTTONDOWN:
+                return True
+            if event.type == pl:
+                screen.blit(fon, (0, 0))
+                cool_font("Insame Sqwirtle", WIN_WIDTH // 2, WIN_HEIGHT // 2 - WIN_WIDTH // 25)
+                cool_font("Press any button to start", WIN_WIDTH // 2, WIN_HEIGHT // 2 + WIN_HEIGHT // 25)
+        pygame.display.flip()
 
 
 def main(curlvl, deth_counter):
@@ -396,19 +444,8 @@ def main(curlvl, deth_counter):
     k = False
     end = False
     imortal = False
-
+    resc = 0
     clock = pygame.time.Clock()
-    pl = pygame.USEREVENT + 1
-    t = 200
-    pygame.time.set_timer(pl, t)
-
-    sec = pygame.USEREVENT + 15
-    t = 250
-    pygame.time.set_timer(pl, t)
-
-    textobnov = pygame.USEREVENT + 55
-    t = 10000
-    pygame.time.set_timer(pl, t)
 
     level = load_level(f"{lvllist[curlvl]}.txt")
     x, y = generate_level(level)
@@ -416,7 +453,6 @@ def main(curlvl, deth_counter):
     hero = Player(x, y)
     entities.add(hero)
     font = pygame.font.Font("GameF/vergilia.ttf", 100)
-    dc = pygame.font.Font("GameF/vergilia.ttf", 25)
 
     total_level_width = len(level[0]) * PLATFORM_WIDTH
     total_level_height = len(level) * PLATFORM_HEIGHT
@@ -461,104 +497,79 @@ def main(curlvl, deth_counter):
                 right = False
             if e.type == KEYUP and e.key == K_a:
                 left = False
+            if e.type == KEYUP and e.key == K_r:
+                resc = 0
             if e.type == KEYDOWN and e.key == pygame.K_r and not hero.alive():
                 if end:
                     end = False
                     curlvl = 1
+                    deth_counter = -1
                 deth_counter += 1
-                return curlvl
-                running = False
+                return curlvl, deth_counter
             all_keys = pygame.key.get_pressed()
             if all_keys[pygame.K_n] and all_keys[pygame.K_d]:
                 imortal = True
+            if all_keys[pygame.K_r] and hero.alive():
+                resc += 1
+        if resc // 60 == 2:
+            deth_counter += 1
+            return curlvl, deth_counter
         screen.blit(BACKGROUND, (0, 0))
         camera.update(hero)
         hero.update(left, right, up, platforms, imortal)
-        if sec:
-            EnemyMove_list.update()
-            for e in enemyMoveS:
-                screen.blit(e.image, camera.apply(e))
+        EnemyMove_list.update()
+        for e in enemyMoveS:
+            screen.blit(e.image, camera.apply(e))
         for e in entities:
             screen.blit(e.image, camera.apply(e))
         for e in enemy:
             screen.blit(e.image, camera.apply(e))
+        if resc != 0:
+            cool_font(f'{round(resc / 120 * 100)}%', WIN_WIDTH // 2, WIN_HEIGHT // 2)
         if hero.Escape():
             curlvl = curlvl + 1
             if curlvl + 1 <= len(lvllist):
-                return curlvl
+                return curlvl, deth_counter
             else:
-                con = font.render("Congratulations, it was the last level!!!^_^", True, (255, 255, 255))
+                screen.blit((transform.scale(image.load('%s/data/end.png' % ICON_DIR), (WIN_WIDTH, WIN_HEIGHT))),
+                            (0, 0))
+                con = font.render('Congratulations, it was the last level!!!^_^', True, (255, 255, 255))
                 rect = con.get_rect()
                 rect.center = (screen.get_rect().center[0], screen.get_rect().center[1] - 100)
                 screen.blit(con, rect)
-                gameoverRGB = font.render("Press R to Respawn", True, (255, 255, 255))
-                rect = gameoverRGB.get_rect()
+                con = font.render("Press R to Respawn", True, (255, 255, 255))
+                rect = con.get_rect()
                 rect.center = (screen.get_rect().center[0], screen.get_rect().center[1])
-                screen.blit(gameoverRGB, rect)
-                thx = font.render("Thx u for playing our game!!!", True, (255, 255, 255))
-                rect = thx.get_rect()
+                screen.blit(con, rect)
+                con = font.render("Thx u for playing our game!!!", True, (255, 255, 255))
+                rect = con.get_rect()
                 rect.center = (screen.get_rect().center[0], screen.get_rect().center[1] + 100)
-                screen.blit(thx, rect)
+                screen.blit(con, rect)
+                con = font.render(f"U died: {deth_counter} times", True, (255, 255, 255))
+                rect = con.get_rect()
+                rect.center = (screen.get_rect().center[0], screen.get_rect().center[1] + 250)
+                screen.blit(con, rect)
                 end = True
                 hero.live = False
-        elif pl and not hero.alive():
-            gameoverB = font.render("Press R to Respawn", True, (0, 0, 255))
-            rect = gameoverB.get_rect()
-            rect.center = (
-                screen.get_rect().center[0] + s * 3 + randint(1, s),
-                screen.get_rect().center[1] + s * 3 + randint(1, s))
-            screen.blit(gameoverB, rect)
-            gameoverG = font.render("Press R to Respawn", True, (0, 255, 0))
-            rect = gameoverG.get_rect()
-            rect.center = (
-                screen.get_rect().center[0] + s * 2 + randint(1, s),
-                screen.get_rect().center[1] + s * 2 + randint(1, s))
-            screen.blit(gameoverG, rect)
+        elif not hero.alive():
+            cool_font("Press R to Respawn", WIN_WIDTH // 2, WIN_HEIGHT // 2)
             pygame.draw.rect(screen, (0, 0, 255), (
                 0 + s * 3 * 2 + randint(1, s), 0 + s * 3 * 2 + randint(1, s), WIN_WIDTH, WIN_HEIGHT), 5)
             pygame.draw.rect(screen, (0, 255, 0), (
                 0 + s * 2 * 2 + randint(1, s), 0 + s * 2 * 2 + randint(1, s), WIN_WIDTH, WIN_HEIGHT), 5)
-            gameoverR = font.render("Press R to Respawn", True, (255, 0, 0))
-            rect = gameoverR.get_rect()
-            rect.center = (
-                screen.get_rect().center[0] + s + randint(1, s), screen.get_rect().center[1] + s + randint(1, s))
-            screen.blit(gameoverR, rect)
             pygame.draw.rect(screen, (255, 0, 0), (
                 0 + s * 2 + randint(1, s), 0 + s * 2 + randint(1, s), WIN_WIDTH, WIN_HEIGHT), 5)
-            gameoverRGB = font.render("Press R to Respawn", True, (255, 255, 255))
-            rect = gameoverRGB.get_rect()
-            rect.center = screen.get_rect().center
-            screen.blit(gameoverRGB, rect)
             pygame.draw.rect(screen, (255, 255, 255), (
                 0, 0, WIN_WIDTH, WIN_HEIGHT), 5)
-        if textobnov:
-            a = randint(1, 3)
-            b = randint(1, 3)
-            c = randint(1, 3)
-            d = randint(1, 3)
-        con = dc.render(f"number of deaths: {deth_counter}", True, (0, 0, 255))
-        rect = con.get_rect()
-        rect.center = (1786, 26)
-        screen.blit(con, rect)
-        con = dc.render(f"number of deaths: {deth_counter}", True, (0, 255, 0))
-        rect = con.get_rect()
-        rect.center = (1784, 24)
-        screen.blit(con, rect)
-        con = dc.render(f"number of deaths: {deth_counter}", True, (255, 0, 0))
-        rect = con.get_rect()
-        rect.center = (1782, 22)
-        screen.blit(con, rect)
-        con = dc.render(f"number of deaths: {deth_counter}", True, (255, 255, 255))
-        rect = con.get_rect()
-        rect.center = (1780, 20)
-        screen.blit(con, rect)
+        cool_font(f"number of deaths: {deth_counter}", 1780, 20, 25, 2)
         pygame.display.update()
         clock.tick(60)
     pygame.quit()
 
 
 if __name__ == "__main__":
-    while True:
+    runnig = start_screen()
+    while runnig:
         enemy_list = pygame.sprite.Group()
         entities = pygame.sprite.Group()
         EnemyMove_list = pygame.sprite.Group()
@@ -566,4 +577,4 @@ if __name__ == "__main__":
         enemy = []
         enemyMoveS = []
         door_list = pygame.sprite.Group()
-        curlvl = main(curlvl, deth_counter)
+        curlvl, deth_counter = main(curlvl, deth_counter)
