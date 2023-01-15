@@ -21,7 +21,7 @@ programIcon = pygame.image.load('icon.png')
 pygame.display.set_icon(programIcon)
 
 deth_counter = 0
-curlvl = 1
+curlvl = 0
 lvllist = ['lvlTEST', 'lvl1', 'lvl2', 'lvl3', 'lvl4', 'lvl5', 'lvl6', 'lvl7']
 
 
@@ -104,6 +104,7 @@ class Player(sprite.Sprite):
         self.startY = y
         self.yvel = 0
         self.live = True
+        self.MOVE_SPEED = MOVE_SPEED
         self.onGround = False
         self.image = Surface((WIDTH, HEIGHT))
         self.image.fill(Color(COLOR))
@@ -155,7 +156,7 @@ class Player(sprite.Sprite):
                 self.boltAnimJump.blit(self.image, (0, 0))
 
             if left:
-                self.xvel = -MOVE_SPEED
+                self.xvel = -self.MOVE_SPEED
                 self.image.fill(Color(COLOR))
                 if up:
                     self.boltAnimJumpLeft.blit(self.image, (0, 0))
@@ -163,7 +164,7 @@ class Player(sprite.Sprite):
                     self.boltAnimLeft.blit(self.image, (0, 0))
 
             if right:
-                self.xvel = MOVE_SPEED
+                self.xvel = self.MOVE_SPEED
                 self.image.fill(Color(COLOR))
                 if up:
                     self.boltAnimJumpRight.blit(self.image, (0, 0))
@@ -312,8 +313,8 @@ def load_level(filename):
 
 
 def generate_level(level):
-    x = 0
-    y = 0
+    x, xh = 0, 0
+    y, yh = 0, 0
     for row in level:
         rc = 0
         for col in row:
@@ -350,6 +351,7 @@ def generate_level(level):
                 entities.add(exit)
                 door_list.add(exit)
             if col == "r":
+                side = 1
                 k = 0
                 xr = x // 32
                 yr = y // 32
@@ -405,6 +407,14 @@ def cool_font(text, w=0, h=0, r=100, s=3):
     screen.blit(gameoverRGB, rect)
 
 
+def obuchenie():
+    cool_font('Use wasd or arrows to move', WIN_WIDTH // 2, WIN_HEIGHT // 2 - 200, 50, 2)
+    cool_font('Press LCtrl or RAlt to slow down', WIN_WIDTH // 2, WIN_HEIGHT // 2 - 100, 50, 2)
+    cool_font('Press F4 to close or open tutorial', WIN_WIDTH // 2, WIN_HEIGHT // 2,
+              50, 2)  ## хз как обучение исправь потом
+    cool_font('GL HF', WIN_WIDTH // 2, WIN_HEIGHT // 2 + 100)
+
+
 def start_screen():
     pygame.init()
     pygame.display.set_caption("Insame Sqwirtle")
@@ -443,6 +453,11 @@ def main(curlvl, deth_counter):
     k = False
     end = False
     imortal = False
+    if curlvl == 0:
+        obuch = True
+    else:
+        obuch = False
+    to_fastMetr = False
     resc = 0
     clock = pygame.time.Clock()
 
@@ -477,13 +492,15 @@ def main(curlvl, deth_counter):
             if e.type == KEYDOWN and e.key == K_ESCAPE:
                 running = False
             if e.type == KEYDOWN and e.key == K_LCTRL:
-                MOVE_SPEED = 4
+                hero.MOVE_SPEED = 4
             if e.type == KEYUP and e.key == K_LCTRL:
-                MOVE_SPEED = 7
+                hero.MOVE_SPEED = 7
             if e.type == KEYDOWN and e.key == K_RALT:
-                MOVE_SPEED = 4
+                hero.MOVE_SPEED = 4
             if e.type == KEYUP and e.key == K_RALT:
-                MOVE_SPEED = 7
+                hero.MOVE_SPEED = 7
+            if e.type == KEYDOWN and e.key == K_F4:
+                obuch = not obuch
             if e.type == KEYUP and e.key == K_UP:
                 up = False
             if e.type == KEYUP and e.key == K_RIGHT:
@@ -504,15 +521,25 @@ def main(curlvl, deth_counter):
                     curlvl = 1
                     deth_counter = -1
                 deth_counter += 1
-                return curlvl, deth_counter
+                return True, curlvl, deth_counter
             all_keys = pygame.key.get_pressed()
             if all_keys[pygame.K_n] and all_keys[pygame.K_d]:
                 imortal = True
-            if all_keys[pygame.K_r] and hero.alive():
+            elif all_keys[pygame.K_r] and hero.alive():
                 resc += 1
+            elif all_keys[pygame.K_t] and all_keys[pygame.K_e] and e.type == KEYDOWN and e.key == pygame.K_l:
+                hero.rect.x += randint(-(hero.rect.x % WIN_WIDTH), WIN_WIDTH - hero.rect.x % WIN_WIDTH)
+                hero.rect.y += randint(-(hero.rect.x % WIN_HEIGHT), WIN_HEIGHT - hero.rect.x % WIN_HEIGHT)
+            elif all_keys[pygame.K_f] and all_keys[pygame.K_s] and e.type == KEYDOWN and all_keys[pygame.K_t]:
+                if hero.MOVE_SPEED == WIN_WIDTH:
+                    hero.MOVE_SPEED = 4
+                    to_fastMetr = False
+                else:
+                    hero.MOVE_SPEED = WIN_WIDTH
+                    to_fastMetr = True
         if resc // 60 == 2:
             deth_counter += 1
-            return curlvl, deth_counter
+            return True, curlvl, deth_counter
         screen.blit(BACKGROUND, (0, 0))
         camera.update(hero)
         hero.update(left, right, up, platforms, imortal)
@@ -528,7 +555,7 @@ def main(curlvl, deth_counter):
         if hero.Escape():
             curlvl = curlvl + 1
             if curlvl + 1 <= len(lvllist):
-                return curlvl, deth_counter
+                return True, curlvl, deth_counter
             else:
                 screen.blit((transform.scale(image.load('%s/data/end.png' % ICON_DIR), (WIN_WIDTH, WIN_HEIGHT))),
                             (0, 0))
@@ -560,15 +587,20 @@ def main(curlvl, deth_counter):
                 0 + s * 2 + randint(1, s), 0 + s * 2 + randint(1, s), WIN_WIDTH, WIN_HEIGHT), 5)
             pygame.draw.rect(screen, (255, 255, 255), (
                 0, 0, WIN_WIDTH, WIN_HEIGHT), 5)
-        cool_font(f"number of deaths: {deth_counter}", 1780, 20, 25, 2)
+        if to_fastMetr:
+            cool_font("The fastest #### boyyyyyyy!!1!!!1!!1! mod = True", 250, 20, 25, 2)
+        if obuch:
+            obuchenie()
+        cool_font(f"number of deaths: {deth_counter}", WIN_WIDTH - 120, 20, 25, 2)
         pygame.display.update()
         clock.tick(60)
     pygame.quit()
+    return False, curlvl, deth_counter
 
 
 if __name__ == "__main__":
-    runnig = start_screen()
-    while runnig:
+    run = start_screen()
+    while run:
         enemy_list = pygame.sprite.Group()
         entities = pygame.sprite.Group()
         EnemyMove_list = pygame.sprite.Group()
@@ -576,4 +608,4 @@ if __name__ == "__main__":
         enemy = []
         enemyMoveS = []
         door_list = pygame.sprite.Group()
-        curlvl, deth_counter = main(curlvl, deth_counter)
+        run, curlvl, deth_counter = main(curlvl, deth_counter)
