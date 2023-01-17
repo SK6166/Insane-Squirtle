@@ -23,7 +23,7 @@ pygame.display.set_icon(programIcon)
 
 deth_counter = 0
 curlvl = 0
-lvllist = ['lvlTEST', 'lvl1', 'lvl2', 'lvl3', 'lvl4', 'lvl5', 'lvl6', 'lvl7']
+lvllist = ['lvlTEST', 'lvl1', 'lvl2', 'lvl3', 'lvl4', 'lvl5', 'lvl6', 'lvl7', 'lvl8']
 
 
 class Platform(sprite.Sprite):
