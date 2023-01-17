@@ -3,7 +3,7 @@ import sys
 
 
 import pygame
-from pygame import *
+from pygame import sprite, Surface, Color,  image, Rect
 import pyganim
 import tkinter as tk
 import time
@@ -26,13 +26,13 @@ curlvl = 0
 lvllist = ['lvlTEST', 'lvl1', 'lvl2', 'lvl3', 'lvl4', 'lvl5', 'lvl6', 'lvl7', 'lvl8']
 
 
-class Platform(sprite.Sprite):
+class Platform(pygame.sprite.Sprite):
     def __init__(self, x, y):
-        sprite.Sprite.__init__(self)
-        self.image = Surface((PLATFORM_WIDTH, PLATFORM_HEIGHT))
-        self.image.fill(Color(PLATFORM_COLOR))
-        self.image = image.load("%s/data/platform.png" % ICON_DIR)
-        self.rect = Rect(x, y, PLATFORM_WIDTH, PLATFORM_HEIGHT)
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((PLATFORM_WIDTH, PLATFORM_HEIGHT))
+        self.image.fill(pygame.Color(PLATFORM_COLOR))
+        self.image = pygame.image.load("%s/data/platform.png" % ICON_DIR)
+        self.rect = pygame.Rect(x, y, PLATFORM_WIDTH, PLATFORM_HEIGHT)
 
 
 root = tk.Tk()
@@ -41,13 +41,13 @@ WIN_WIDTH = root.winfo_screenwidth()
 WIN_HEIGHT = root.winfo_screenheight()
 DISPLAY = (WIN_WIDTH, WIN_HEIGHT)
 screen = pygame.display.set_mode(DISPLAY, pygame.FULLSCREEN)
-BACKGROUND = transform.scale(image.load('%s/data/Fon.jpg' % ICON_DIR), (WIN_WIDTH, WIN_HEIGHT))
+BACKGROUND = pygame.transform.scale(pygame.image.load('%s/data/Fon.jpg' % ICON_DIR), (WIN_WIDTH, WIN_HEIGHT))
 
 
 class Camera(object):
     def __init__(self, camera_func, width, height):
         self.camera_func = camera_func
-        self.state = Rect(0, 0, width, height)
+        self.state = pygame.Rect(0, 0, width, height)
 
     def apply(self, target):
         return target.rect.move(self.state.topleft)
@@ -66,7 +66,7 @@ def camera_configure(camera, target_rect):
     t = max(-(camera.height - WIN_HEIGHT), t)
     t = min(0, t)
 
-    return Rect(l, t, w, h)
+    return pygame.Rect(l, t, w, h)
 
 
 MOVE_SPEED = 7
@@ -97,9 +97,9 @@ ANIMATION_DEATH = [('%s/data/d1.png' % ICON_DIR),
                    ('%s/data/d4.png' % ICON_DIR)]
 
 
-class Player(sprite.Sprite):
+class Player(pygame.sprite.Sprite):
     def __init__(self, x, y):
-        sprite.Sprite.__init__(self)
+        pygame.sprite.Sprite.__init__(self)
         self.xvel = 0
         self.startX = x
         self.startY = y
@@ -107,10 +107,10 @@ class Player(sprite.Sprite):
         self.live = True
         self.MOVE_SPEED = MOVE_SPEED
         self.onGround = False
-        self.image = Surface((WIDTH, HEIGHT))
-        self.image.fill(Color(COLOR))
-        self.rect = Rect(x + 10, y, WIDTH - 10, HEIGHT)
-        self.image.set_colorkey(Color(COLOR))
+        self.image = pygame.Surface((WIDTH, HEIGHT))
+        self.image.fill(pygame.Color(COLOR))
+        self.rect = pygame.Rect(x + 10, y, WIDTH - 10, HEIGHT)
+        self.image.set_colorkey(pygame.Color(COLOR))
         self.dk = True
         boltAnim = []
         for anim in ANIMATION_RIGHT:
@@ -146,19 +146,19 @@ class Player(sprite.Sprite):
             if self.dk and not imortal:
                 self.boltAnimDeath.play()
                 self.dk = False
-            self.image.fill(Color(COLOR))
+            self.image.fill(pygame.Color(COLOR))
             self.boltAnimDeath.blit(self.image, (0, 0))
 
         else:
             if up:
                 if self.onGround:
                     self.yvel = -JUMP_POWER
-                self.image.fill(Color(COLOR))
+                self.image.fill(pygame.Color(COLOR))
                 self.boltAnimJump.blit(self.image, (0, 0))
 
             if left:
                 self.xvel = -self.MOVE_SPEED
-                self.image.fill(Color(COLOR))
+                self.image.fill(pygame.Color(COLOR))
                 if up:
                     self.boltAnimJumpLeft.blit(self.image, (0, 0))
                 else:
@@ -166,7 +166,7 @@ class Player(sprite.Sprite):
 
             if right:
                 self.xvel = self.MOVE_SPEED
-                self.image.fill(Color(COLOR))
+                self.image.fill(pygame.Color(COLOR))
                 if up:
                     self.boltAnimJumpRight.blit(self.image, (0, 0))
                 else:
@@ -175,7 +175,7 @@ class Player(sprite.Sprite):
             if not (left or right):
                 self.xvel = 0
                 if not up:
-                    self.image.fill(Color(COLOR))
+                    self.image.fill(pygame.Color(COLOR))
                     self.boltAnimStay.blit(self.image, (0, 0))
             if not self.onGround:
                 self.yvel += GRAVITY
@@ -204,7 +204,7 @@ class Player(sprite.Sprite):
 
     def collide(self, xvel, yvel, platforms):
         for p in platforms:
-            if sprite.collide_rect(self, p):
+            if pygame.sprite.collide_rect(self, p):
 
                 if xvel > 0:
                     self.rect.right = p.rect.left
@@ -222,49 +222,49 @@ class Player(sprite.Sprite):
                     self.yvel = 0
 
 
-class SpikeS(sprite.Sprite):
+class SpikeS(pygame.sprite.Sprite):
     def __init__(self, x, y):
-        sprite.Sprite.__init__(self)
-        self.image = Surface((PLATFORM_WIDTH, PLATFORM_HEIGHT))
-        self.image.fill(Color(PLATFORM_COLOR))
-        self.image = image.load("%s/data/spikeS.png" % ICON_DIR)
-        self.rect = Rect(x, y + 32 - 7, 32, 7)
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((PLATFORM_WIDTH, PLATFORM_HEIGHT))
+        self.image.fill(pygame.Color(PLATFORM_COLOR))
+        self.image = pygame.image.load("%s/data/spikeS.png" % ICON_DIR)
+        self.rect = pygame.Rect(x, y + 32 - 7, 32, 7)
 
 
-class SpikeM(sprite.Sprite):
+class SpikeM(pygame.sprite.Sprite):
     def __init__(self, x, y):
-        sprite.Sprite.__init__(self)
-        self.image = Surface((PLATFORM_WIDTH, PLATFORM_HEIGHT))
-        self.image.fill(Color(PLATFORM_COLOR))
-        self.image = image.load("%s/data/spikeM.png" % ICON_DIR)
-        self.rect = Rect(x, y + 32 - 16, 32, 16)
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((PLATFORM_WIDTH, PLATFORM_HEIGHT))
+        self.image.fill(pygame.Color(PLATFORM_COLOR))
+        self.image = pygame.image.load("%s/data/spikeM.png" % ICON_DIR)
+        self.rect = pygame.Rect(x, y + 32 - 16, 32, 16)
 
 
-class SpikeL(sprite.Sprite):
+class SpikeL(pygame.sprite.Sprite):
     def __init__(self, x, y):
-        sprite.Sprite.__init__(self)
-        self.image = Surface((PLATFORM_WIDTH, PLATFORM_HEIGHT))
-        self.image.fill(Color(PLATFORM_COLOR))
-        self.image = image.load("%s/data/spikeL.png" % ICON_DIR)
-        self.rect = Rect(x, y, 32, 32)
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((PLATFORM_WIDTH, PLATFORM_HEIGHT))
+        self.image.fill(pygame.Color(PLATFORM_COLOR))
+        self.image = pygame.image.load("%s/data/spikeL.png" % ICON_DIR)
+        self.rect = pygame.Rect(x, y, 32, 32)
 
 
-class SpikeS180(sprite.Sprite):
+class SpikeS180(pygame.sprite.Sprite):
     def __init__(self, x, y):
-        sprite.Sprite.__init__(self)
-        self.image = Surface((PLATFORM_WIDTH, PLATFORM_HEIGHT))
-        self.image.fill(Color(PLATFORM_COLOR))
-        self.image = image.load("%s/data/spikeS180.png" % ICON_DIR)
-        self.rect = Rect(x, y, 32, 7)
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((PLATFORM_WIDTH, PLATFORM_HEIGHT))
+        self.image.fill(pygame.Color(PLATFORM_COLOR))
+        self.image = pygame.image.load("%s/data/spikeS180.png" % ICON_DIR)
+        self.rect = pygame.Rect(x, y, 32, 7)
 
 
-class SpikeM180(sprite.Sprite):
+class SpikeM180(pygame.sprite.Sprite):
     def __init__(self, x, y):
-        sprite.Sprite.__init__(self)
-        self.image = Surface((PLATFORM_WIDTH, PLATFORM_HEIGHT))
-        self.image.fill(Color(PLATFORM_COLOR))
-        self.image = image.load("%s/data/spikeM180.png" % ICON_DIR)
-        self.rect = Rect(x, y, 32, 16)
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((PLATFORM_WIDTH, PLATFORM_HEIGHT))
+        self.image.fill(pygame.Color(PLATFORM_COLOR))
+        self.image = pygame.image.load("%s/data/spikeM180.png" % ICON_DIR)
+        self.rect = pygame.Rect(x, y, 32, 16)
 
 
 class SpikeL180(sprite.Sprite):
@@ -476,47 +476,47 @@ def main(curlvl, deth_counter):
     running = True
     while running:
         for e in pygame.event.get():
-            if e.type == QUIT:
+            if e.type == pygame.QUIT:
                 running = False
-            if e.type == KEYDOWN and e.key == K_UP:
+            if e.type == pygame.KEYDOWN and e.key == pygame.K_UP:
                 up = True
-            if e.type == KEYDOWN and e.key == K_LEFT:
+            if e.type == pygame.KEYDOWN and e.key == pygame.K_LEFT:
                 left = True
-            if e.type == KEYDOWN and e.key == K_RIGHT:
+            if e.type == pygame.KEYDOWN and e.key == pygame.K_RIGHT:
                 right = True
-            if e.type == KEYDOWN and e.key == K_w:
+            if e.type == pygame.KEYDOWN and e.key == pygame.K_w:
                 up = True
-            if e.type == KEYDOWN and e.key == K_a:
+            if e.type == pygame.KEYDOWN and e.key == pygame.K_a:
                 left = True
-            if e.type == KEYDOWN and e.key == K_d:
+            if e.type == pygame.KEYDOWN and e.key == pygame.K_d:
                 right = True
-            if e.type == KEYDOWN and e.key == K_ESCAPE:
+            if e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
                 running = False
-            if e.type == KEYDOWN and e.key == K_LCTRL:
+            if e.type == pygame.KEYDOWN and e.key == pygame.K_LCTRL:
                 hero.MOVE_SPEED = 4
-            if e.type == KEYUP and e.key == K_LCTRL:
+            if e.type == pygame.KEYUP and e.key == pygame.K_LCTRL:
                 hero.MOVE_SPEED = 7
-            if e.type == KEYDOWN and e.key == K_RALT:
+            if e.type == pygame.KEYDOWN and e.key == pygame.K_RALT:
                 hero.MOVE_SPEED = 4
-            if e.type == KEYUP and e.key == K_RALT:
+            if e.type == pygame.KEYUP and e.key == pygame.K_RALT:
                 hero.MOVE_SPEED = 7
-            if e.type == KEYDOWN and e.key == K_F4:
+            if e.type == pygame.KEYDOWN and e.key == pygame.K_F4:
                 obuch = not obuch
-            if e.type == KEYUP and e.key == K_UP:
+            if e.type == pygame.KEYUP and e.key == pygame.K_UP:
                 up = False
-            if e.type == KEYUP and e.key == K_RIGHT:
+            if e.type == pygame.KEYUP and e.key == pygame.K_RIGHT:
                 right = False
-            if e.type == KEYUP and e.key == K_LEFT:
+            if e.type == pygame.KEYUP and e.key == pygame.K_LEFT:
                 left = False
-            if e.type == KEYUP and e.key == K_w:
+            if e.type == pygame.KEYUP and e.key == pygame.K_w:
                 up = False
-            if e.type == KEYUP and e.key == K_d:
+            if e.type == pygame.KEYUP and e.key == pygame.K_d:
                 right = False
-            if e.type == KEYUP and e.key == K_a:
+            if e.type == pygame.KEYUP and e.key == pygame.K_a:
                 left = False
-            if e.type == KEYUP and e.key == K_r:
+            if e.type == pygame.KEYUP and e.key == pygame.K_r:
                 resc = 0
-            if e.type == KEYDOWN and e.key == pygame.K_r and not hero.alive():
+            if e.type == pygame.KEYDOWN and e.key == pygame.K_r and not hero.alive():
                 if end:
                     end = False
                     curlvl = 1
@@ -528,10 +528,10 @@ def main(curlvl, deth_counter):
                 imortal = True
             elif all_keys[pygame.K_r] and hero.alive():
                 resc += 1
-            elif all_keys[pygame.K_t] and all_keys[pygame.K_e] and e.type == KEYDOWN and e.key == pygame.K_l:
+            elif all_keys[pygame.K_t] and all_keys[pygame.K_e] and e.type == pygame.KEYDOWN and e.key == pygame.K_l:
                 hero.rect.x += randint(-(hero.rect.x % WIN_WIDTH), WIN_WIDTH - hero.rect.x % WIN_WIDTH)
                 hero.rect.y += randint(-(hero.rect.x % WIN_HEIGHT), WIN_HEIGHT - hero.rect.x % WIN_HEIGHT)
-            elif all_keys[pygame.K_f] and all_keys[pygame.K_s] and e.type == KEYDOWN and all_keys[pygame.K_t]:
+            elif all_keys[pygame.K_f] and all_keys[pygame.K_s] and e.type == pygame.KEYDOWN and all_keys[pygame.K_t]:
                 if hero.MOVE_SPEED == WIN_WIDTH:
                     hero.MOVE_SPEED = 4
                     to_fastMetr = False
@@ -558,7 +558,7 @@ def main(curlvl, deth_counter):
             if curlvl + 1 <= len(lvllist):
                 return True, curlvl, deth_counter
             else:
-                screen.blit((transform.scale(image.load('%s/data/end.png' % ICON_DIR), (WIN_WIDTH, WIN_HEIGHT))),
+                screen.blit((pygame.transform.scale(image.load('%s/data/end.png' % ICON_DIR), (WIN_WIDTH, WIN_HEIGHT))),
                             (0, 0))
                 con = font.render('Congratulations, it was the last level!!!^_^', True, (255, 255, 255))
                 rect = con.get_rect()
