@@ -443,7 +443,7 @@ def start_screen():
         pygame.display.flip()
 
 
-def main(curlvl, deth_counter):
+def runlvl(curlvl, deth_counter):
     pygame.init()
     pygame.display.set_caption("Insame Sqwirtle")
     bg = Surface((WIN_WIDTH, WIN_HEIGHT))
@@ -609,4 +609,4 @@ if __name__ == "__main__":
         enemy = []
         enemyMoveS = []
         door_list = pygame.sprite.Group()
-        run, curlvl, deth_counter = main(curlvl, deth_counter)
+        run, curlvl, deth_counter = runlvl(curlvl, deth_counter)
